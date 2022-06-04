@@ -1,0 +1,51 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="MergeRootFrame" >
+    <!-- 顶部添加文字 -->
+    <!-- 底部显示图片 -->
+    <RelativeLayout
+        android:id="@+id/Layout_bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/Layout_top"
+        android:layout_marginTop="-80dp"
+        android:background="#EFDFDF"
+        android:gravity="center"
+        android:orientation="horizontal"
+        tools:ignore="NotSibling">
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_horizontal" />
+
+        <RelativeLayout
+            android:id="@+id/Layout_top"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="150dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="请点击menu处理图片"
+                android:textSize="20sp" />
+        </RelativeLayout>
+
+        <Switch
+            android:id="@+id/switch1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/Layout_top"
+            android:layout_marginBottom="10dp"
+            android:text="Switch" />
+
+    </RelativeLayout>
+</RelativeLayout>
