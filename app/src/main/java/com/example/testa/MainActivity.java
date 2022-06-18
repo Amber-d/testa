@@ -22,6 +22,7 @@ import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -150,56 +151,66 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) { //创建Menu
         //自定义menu 添加图标(使用自带图标)
-        menu.add(Menu.NONE, Menu.FIRST + 1 , 1, "打开").
+        menu.add(1, 1 , 1, "本地").
                 setIcon(android.R.drawable.ic_menu_slideshow);
-        menu.add(Menu.NONE, Menu.FIRST + 2 , 2, "怀旧").
+        menu.add(1, 2  , 2, "相机").
+                setIcon(android.R.drawable.ic_menu_view);
+        SubMenu file=menu.addSubMenu(1,3,3,"图片处理");
+        file.add(2, 1 , 3, "怀旧").
                 setIcon(android.R.drawable.ic_menu_edit);
-        menu.add(Menu.NONE, Menu.FIRST + 3 , 3, "浮雕").
+        file.add(2, 2 , 4, "浮雕").
                 setIcon(android.R.drawable.ic_menu_gallery);
-        menu.add(Menu.NONE, Menu.FIRST + 4 , 4, "模糊").
+        file.add(2, 3 , 5, "模糊").
                 setIcon(android.R.drawable.ic_menu_crop);
-        menu.add(Menu.NONE, Menu.FIRST + 5 , 5, "光照").
+        file.add(2, 4 , 6, "光照").
                 setIcon(android.R.drawable.ic_menu_camera);
-        menu.add(Menu.NONE, Menu.FIRST + 6  , 6, "锐化").
+        file.add(2, 5 , 7, "锐化").
                 setIcon(android.R.drawable.ic_menu_view);
-        menu.add(Menu.NONE, Menu.FIRST + 7  , 7, "相机").
-                setIcon(android.R.drawable.ic_menu_view);
+
+
         return true;
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) { //选择Menu
         //选择id 对应Menu.add的参数Menu.FIRST+i
         int id = item.getItemId();
-        switch(id) {
-            case Menu.FIRST+1:
-                Toast.makeText(this, "打开图片", Toast.LENGTH_SHORT).show();
-                OpenImage();
-                break;
-            case Menu.FIRST+2:
-                Toast.makeText(this, "图片怀旧效果", Toast.LENGTH_SHORT).show();
-                OldRemeberImage();
-                break;
-            case Menu.FIRST+3:
-                Toast.makeText(this, "图片浮雕效果", Toast.LENGTH_SHORT).show();
-                ReliefImage();
-                break;
-            case Menu.FIRST+4:
-                Toast.makeText(this, "图片模糊效果", Toast.LENGTH_SHORT).show();
-                FuzzyImage();
-                break;
-            case Menu.FIRST+5:
-                Toast.makeText(this, "图片光照效果", Toast.LENGTH_SHORT).show();
-                SunshineImage();
-                break;
-            case Menu.FIRST+6:
-                Toast.makeText(this, "图片锐化效果", Toast.LENGTH_SHORT).show();
-                SharpenImage();
-                break;
-            case Menu.FIRST+7:
-                Toast.makeText(this, "打开相机", Toast.LENGTH_SHORT).show();
-                openCamera();
-                break;
+        if(item.getGroupId()==1) {
+            switch (id) {
+                case 1:
+                    Toast.makeText(this, "打开本地图片", Toast.LENGTH_SHORT).show();
+                    OpenImage();
+                    break;
+                case 2:
+                    Toast.makeText(this, "打开相机", Toast.LENGTH_SHORT).show();
+                    openCamera();
+                    break;
+            }
         }
+        else {
+            switch (id) {
+                case 1:
+                    Toast.makeText(this, "图片怀旧效果", Toast.LENGTH_SHORT).show();
+                    OldRemeberImage();
+                    break;
+                case 2:
+                    Toast.makeText(this, "图片浮雕效果", Toast.LENGTH_SHORT).show();
+                    ReliefImage();
+                    break;
+                case 3:
+                    Toast.makeText(this, "图片模糊效果", Toast.LENGTH_SHORT).show();
+                    FuzzyImage();
+                    break;
+                case 4:
+                    Toast.makeText(this, "图片光照效果", Toast.LENGTH_SHORT).show();
+                    SunshineImage();
+                    break;
+                case 5:
+                    Toast.makeText(this, "图片锐化效果", Toast.LENGTH_SHORT).show();
+                    SharpenImage();
+                    break;
+            }
+        }
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -215,6 +226,54 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void SharpenImage() {
+        int[] laplacian = new int[] {  -1, -1, -1, -1, 9, -1, -1, -1, -1 };
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        int pixR = 0;
+        int pixG = 0;
+        int pixB = 0;
+        int pixColor = 0;
+        int newR = 0;
+        int newG = 0;
+        int newB = 0;
+        int idx = 0;
+        float alpha = 0.3F;  //图片透明度
+        int[] pixels = new int[width * height];
+        bmp.getPixels(pixels, 0, width, 0, 0, width, height);
+        //图像处理
+        for (int i = 1; i < height - 1; i++)
+        {
+            for (int k = 1; k < width - 1; k++)
+            {
+                idx = 0;
+                newR = 0;
+                newG = 0;
+                newB = 0;
+                for (int n = -1; n <= 1; n++)   //取出图像3*3领域像素
+                {
+                    for (int m = -1; m <= 1; m++)  //n行数不变 m列变换
+                    {
+                        pixColor = pixels[(i + n) * width + k + m];  //当前点(i,k)
+                        pixR = Color.red(pixColor);
+                        pixG = Color.green(pixColor);
+                        pixB = Color.blue(pixColor);
+                        //图像像素与对应摸板相乘
+                        newR = newR + (int) (pixR * laplacian[idx] * alpha);
+                        newG = newG + (int) (pixG * laplacian[idx] * alpha);
+                        newB = newB + (int) (pixB * laplacian[idx] * alpha);
+                        idx++;
+                    }
+                }
+                newR = Math.min(255, Math.max(0, newR));
+                newG = Math.min(255, Math.max(0, newG));
+                newB = Math.min(255, Math.max(0, newB));
+                //赋值
+                pixels[i * width + k] = Color.argb(255, newR, newG, newB);
+            }
+        }
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        imageShow.setImageBitmap(bitmap);
     }
 
     //自定义函数 打开图片
