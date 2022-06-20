@@ -26,6 +26,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -44,10 +45,12 @@ public class MainActivity extends AppCompatActivity {
     //自定义变量
     private ImageView imageShow;           //显示图片
     private Bitmap bmp;
+    private Bitmap bitmap;
     private final int IMAGE_OPEN = 0;      //打开图片
     public ImageView ivPhoto;
     public ImageView ivCamera;
     public Uri mCameraUri;
+    Button btn;
 
     /**
      * 用于保存图片的文件路径，Android 10以下使用图片路径访问图片
@@ -58,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        btn=(Button)findViewById(R.id.button);
+        btn.setOnClickListener(new MyClickHundler());
         imageShow = (ImageView) findViewById(R.id.imageView1);
         ivCamera = findViewById(R.id.ivCamera);
         ivPhoto = findViewById(R.id.ivPhoto);
@@ -66,13 +71,64 @@ public class MainActivity extends AppCompatActivity {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-//        ivCamera.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-////                checkPermissionAndCamera();
-//            }
-//        });
+            }
+    class MyClickHundler implements View.OnClickListener{
+        public void onClick(View v) {
+                    Toast.makeText(MainActivity.this, "保存", Toast.LENGTH_LONG).show();
+                    save(MainActivity.this,bitmap);
+                    saveUserInfo("123","1234");
+            }
+        }
+
+
+    public static boolean saveUserInfo(String number,String password){
+        String path = "/storage/emulated/0/Android/data/photoship/data.txt";
+        try {
+            FileOutputStream fos = new FileOutputStream(path);
+            String info = number + "##" + password;
+            fos.write(info.getBytes());
+            fos.flush();
+            fos.close();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
+
+    public static boolean save(Context context, Bitmap ab) {
+        // 首先保存图片
+        String storePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dearxy";
+        File appDir = new File(storePath);
+        if (!appDir.exists()) {
+            appDir.mkdir();
+        }
+        String fileName = System.currentTimeMillis() + ".jpg";
+        File file = new File(appDir, fileName);
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            //通过io流的方式来压缩保存图片
+            boolean isSuccess = ab.compress(Bitmap.CompressFormat.JPEG, 60, fos);
+            fos.flush();
+            fos.close();
+
+            //把文件插入到系统图库
+            MediaStore.Images.Media.insertImage(context.getContentResolver(), file.getAbsolutePath(), fileName, null);
+
+            //保存图片后发送广播通知更新数据库
+            Uri uri = Uri.fromFile(file);
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
+            if (isSuccess) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -173,8 +229,7 @@ public class MainActivity extends AppCompatActivity {
                 setIcon(android.R.drawable.ic_menu_view);
         file.add(2, 6, 8, "油画").
                 setIcon(android.R.drawable.ic_menu_slideshow);
-        menu.add(1, 10, 9, "保存").
-                setIcon(android.R.drawable.ic_menu_view);
+
 
 
         return true;
@@ -194,16 +249,13 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "打开相机", Toast.LENGTH_SHORT).show();
                     openCamera();
                     break;
-                case 10:
-                    Toast.makeText(this, "保存图片", Toast.LENGTH_SHORT).show();
-
-                    break;
             }
         } else {
             switch (id) {
                 case 1:
                     Toast.makeText(this, "图片怀旧效果", Toast.LENGTH_SHORT).show();
                     OldRemeberImage();
+                    saveUserInfo("123","1234");
                     break;
                 case 2:
                     Toast.makeText(this, "图片浮雕效果", Toast.LENGTH_SHORT).show();
@@ -242,54 +294,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void SharpenImage() {
-        int[] laplacian = new int[]{-1, -1, -1, -1, 9, -1, -1, -1, -1};
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-        int pixR = 0;
-        int pixG = 0;
-        int pixB = 0;
-        int pixColor = 0;
-        int newR = 0;
-        int newG = 0;
-        int newB = 0;
-        int idx = 0;
-        float alpha = 0.3F;  //图片透明度
-        int[] pixels = new int[width * height];
-        bmp.getPixels(pixels, 0, width, 0, 0, width, height);
-        //图像处理
-        for (int i = 1; i < height - 1; i++) {
-            for (int k = 1; k < width - 1; k++) {
-                idx = 0;
-                newR = 0;
-                newG = 0;
-                newB = 0;
-                for (int n = -1; n <= 1; n++)   //取出图像3*3领域像素
-                {
-                    for (int m = -1; m <= 1; m++)  //n行数不变 m列变换
-                    {
-                        pixColor = pixels[(i + n) * width + k + m];  //当前点(i,k)
-                        pixR = Color.red(pixColor);
-                        pixG = Color.green(pixColor);
-                        pixB = Color.blue(pixColor);
-                        //图像像素与对应摸板相乘
-                        newR = newR + (int) (pixR * laplacian[idx] * alpha);
-                        newG = newG + (int) (pixG * laplacian[idx] * alpha);
-                        newB = newB + (int) (pixB * laplacian[idx] * alpha);
-                        idx++;
-                    }
-                }
-                newR = Math.min(255, Math.max(0, newR));
-                newG = Math.min(255, Math.max(0, newG));
-                newB = Math.min(255, Math.max(0, newB));
-                //赋值
-                pixels[i * width + k] = Color.argb(255, newR, newG, newB);
-            }
-        }
-        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
-        imageShow.setImageBitmap(bitmap);
-    }
+
 
     //自定义函数 打开图片
     public void OpenImage() {
@@ -299,38 +304,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public static boolean saveImageToGallery(Context context, Bitmap ab) {
-        // 首先保存图片
-        String storePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dearxy";
-        File appDir = new File(storePath);
-        if (!appDir.exists()) {
-            appDir.mkdir();
-        }
-        String fileName = System.currentTimeMillis() + ".jpg";
-        File file = new File(appDir, fileName);
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            //通过io流的方式来压缩保存图片
-            boolean isSuccess = ab.compress(Bitmap.CompressFormat.JPEG, 60, fos);
-            fos.flush();
-            fos.close();
 
-            //把文件插入到系统图库
-            //MediaStore.Images.Media.insertImage(context.getContentResolver(), file.getAbsolutePath(), fileName, null);
-
-            //保存图片后发送广播通知更新数据库
-            Uri uri = Uri.fromFile(file);
-            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri));
-            if (isSuccess) {
-                return true;
-            } else {
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
     //显示打开图片
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -379,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
          */
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         int pixColor = 0;
         int pixR = 0;
         int pixG = 0;
@@ -404,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
         }
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
         imageShow.setImageBitmap(bitmap);
-        saveImageToGallery(this, bitmap);
+//        save(this,bitmap);
 
     }
 
@@ -421,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
          */
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         int pixColor = 0;
         int pixR = 0;
         int pixG = 0;
@@ -453,6 +427,7 @@ public class MainActivity extends AppCompatActivity {
         imageShow.setImageBitmap(bitmap);
     }
 
+
     //图像模糊处理
     private void FuzzyImage() {
         /*
@@ -466,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
         int delta = 16; // 除以值 值越小图片会越亮,越大则越暗
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         int pixColor = 0;
         int pixR = 0;
         int pixG = 0;
@@ -522,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
          */
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
         int pixColor = 0;
         int pixR = 0;
         int pixG = 0;
@@ -565,10 +540,57 @@ public class MainActivity extends AppCompatActivity {
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
         imageShow.setImageBitmap(bitmap);
     }
+    private void SharpenImage() {
+        int[] laplacian = new int[]{-1, -1, -1, -1, 9, -1, -1, -1, -1};
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        int pixR = 0;
+        int pixG = 0;
+        int pixB = 0;
+        int pixColor = 0;
+        int newR = 0;
+        int newG = 0;
+        int newB = 0;
+        int idx = 0;
+        float alpha = 0.3F;  //图片透明度
+        int[] pixels = new int[width * height];
+        bmp.getPixels(pixels, 0, width, 0, 0, width, height);
+        //图像处理
+        for (int i = 1; i < height - 1; i++) {
+            for (int k = 1; k < width - 1; k++) {
+                idx = 0;
+                newR = 0;
+                newG = 0;
+                newB = 0;
+                for (int n = -1; n <= 1; n++)   //取出图像3*3领域像素
+                {
+                    for (int m = -1; m <= 1; m++)  //n行数不变 m列变换
+                    {
+                        pixColor = pixels[(i + n) * width + k + m];  //当前点(i,k)
+                        pixR = Color.red(pixColor);
+                        pixG = Color.green(pixColor);
+                        pixB = Color.blue(pixColor);
+                        //图像像素与对应摸板相乘
+                        newR = newR + (int) (pixR * laplacian[idx] * alpha);
+                        newG = newG + (int) (pixG * laplacian[idx] * alpha);
+                        newB = newB + (int) (pixB * laplacian[idx] * alpha);
+                        idx++;
+                    }
+                }
+                newR = Math.min(255, Math.max(0, newR));
+                newG = Math.min(255, Math.max(0, newG));
+                newB = Math.min(255, Math.max(0, newB));
+                //赋值
+                pixels[i * width + k] = Color.argb(255, newR, newG, newB);
+            }
+        }
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        imageShow.setImageBitmap(bitmap);
+    }
     public void YouHua()
     {
-        Bitmap bitmap = Bitmap.createBitmap(bmp.getWidth(),
-                bmp.getHeight(), Bitmap.Config.RGB_565);
+        bitmap = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), Bitmap.Config.RGB_565);
         int color;
         int Radio = 0;
         int width = bmp.getWidth();
