@@ -228,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
                 setIcon(android.R.drawable.ic_menu_view);
         file.add(2, 6, 8, "油画").
                 setIcon(android.R.drawable.ic_menu_slideshow);
-        menu.add(1, 3, 9, "保存").
+        menu.add(1, 4, 9, "保存").
                 setIcon(android.R.drawable.ic_menu_view);
 
 
@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "打开相机", Toast.LENGTH_SHORT).show();
                     openCamera();
                     break;
-                case 3:
+                case 4:
                     Toast.makeText(this, "保存图片", Toast.LENGTH_SHORT).show();
                     save(this,bitmap);
                     break;
