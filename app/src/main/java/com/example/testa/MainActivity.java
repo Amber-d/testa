@@ -61,8 +61,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        btn=(Button)findViewById(R.id.button);
-        btn.setOnClickListener(new MyClickHundler());
+        //btn.setOnClickListener(new MyClickHundler());
         imageShow = (ImageView) findViewById(R.id.imageView1);
         ivCamera = findViewById(R.id.ivCamera);
         ivPhoto = findViewById(R.id.ivPhoto);
@@ -72,13 +71,13 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
             }
-    class MyClickHundler implements View.OnClickListener{
-        public void onClick(View v) {
-                    Toast.makeText(MainActivity.this, "保存", Toast.LENGTH_LONG).show();
-                    save(MainActivity.this,bitmap);
-                    saveUserInfo("123","1234");
-            }
-        }
+//    class MyClickHundler implements View.OnClickListener{
+//        public void onClick(View v) {
+//                    Toast.makeText(MainActivity.this, "保存", Toast.LENGTH_LONG).show();
+//                    save(MainActivity.this,bitmap);
+//                    saveUserInfo("123","1234");
+//            }
+
 
 
     public static boolean saveUserInfo(String number,String password){
@@ -229,7 +228,8 @@ public class MainActivity extends AppCompatActivity {
                 setIcon(android.R.drawable.ic_menu_view);
         file.add(2, 6, 8, "油画").
                 setIcon(android.R.drawable.ic_menu_slideshow);
-
+        menu.add(1, 3, 9, "保存").
+                setIcon(android.R.drawable.ic_menu_view);
 
 
         return true;
@@ -248,6 +248,10 @@ public class MainActivity extends AppCompatActivity {
                 case 2:
                     Toast.makeText(this, "打开相机", Toast.LENGTH_SHORT).show();
                     openCamera();
+                    break;
+                case 3:
+                    Toast.makeText(this, "保存图片", Toast.LENGTH_SHORT).show();
+                    save(this,bitmap);
                     break;
             }
         } else {
